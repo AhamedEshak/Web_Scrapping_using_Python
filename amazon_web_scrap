@@ -1,0 +1,70 @@
+# installing the required libraries
+
+#bs4 package useful to scrap web pages
+!pip install bs4
+
+!pip install requests
+
+!pip install pandas
+
+# importing the required Packages
+
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+# creating a function to work with the URL
+def scrape_product_details(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    #from here we start getting of our data by pulling the requests
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+# creating an empty list that stores all the scrapped product details
+    product_details = []
+#  find all the product containers on the page
+    products = soup.find_all("div", {"data-component-type": "s-search-result"})
+    
+    for product in products:
+# It is used to extract the title of the product from the HTML structure
+        title_element = product.find("span", class_="a-size-medium")
+        title = title_element.text.strip() if title_element else "N/A"
+
+# # It is used to extract the price of the product from the HTML structure
+        price_element = product.find("span", class_="a-price-whole")
+        price = price_element.text.strip() if price_element else "N/A"
+
+# It is used to extract the rating of the product from the HTML structure
+        rating_element = product.find("span", class_="a-icon-alt")
+        rating = rating_element.text.strip() if rating_element else "N/A"
+
+# It is used to extract the selling of the product from the HTML structure if not available printing out of stock
+        seller_element = product.find("span", class_="a-color-secondary")
+        seller = seller_element.text.strip() if seller_element else "N/A"
+
+        if seller != "Currently unavailable.":
+            product_details.append([title, price, rating, seller])
+
+    return product_details
+
+# creating a function to save the scrapped product details into the csv
+
+def save_to_csv(data, filename):
+    with open(filename, "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Product Name", "Price", "Rating", "Seller Name (If not out of stock)"])
+        writer.writerows(data)
+
+# The resulting CSV file will contain the product details in a tabular format, with each row representing a product and each column representing a different attribute of the product.
+
+def main():
+    url = "https://www.amazon.in/s?rh=n%3A6612025031&fs=true&ref=lp_6612025031_sar"
+    product_details = scrape_product_details(url)
+    save_to_csv(product_details, "product_details.csv")
+    print("Product details saved to product_details.csv")
+if __name__ == "__main__":
+    main()
+
+# Finally a CSV file is created with the necessary columns and the data is stored in the product_details.csv
