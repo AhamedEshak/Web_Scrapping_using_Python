@@ -1,0 +1,80 @@
+# Twitter Web Scrapping.
+
+#install the gdown library
+!pip install gdown
+
+# third-party library specifically designed to simplify the process of downloading files from Google Drive
+
+# importing the gdown package
+import gdown
+
+# calling the link
+url = 'https://drive.google.com/file/d/1PLYwrGn5YApyWU2QpjbdhM6tea0HuGq7/view?usp=sharing'
+output_path = 'twitter_profiles.csv'
+
+# Extracting file ID from the URL
+file_id = url.split('/')[-2]
+
+# Construct the download URL
+download_url = f'https://drive.google.com/uc?id={file_id}'
+
+# Download the file
+gdown.download(download_url, output_path, quiet=False)
+
+
+# importing the necessary packages 
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import time
+import csv
+
+driver = webdriver.Chrome('Chrome')
+
+# Define the Twitter profile URL
+profile_url = 'https://twitter.com/whatsapp'
+
+# Load the Twitter profile page
+driver.get(profile_url)
+
+# Sleep for a few seconds to allow the page to load completely
+time.sleep(5)
+
+# Extract the HTML content of the loaded page
+html_content = driver.page_source
+
+# Create a Beautiful Soup object
+soup = BeautifulSoup(html_content, 'html.parser')
+
+# Find the bio
+bio_element = soup.find('div', class_='ProfileHeaderCard-bio')
+bio = bio_element.text.strip() if bio_element else ""
+
+# Find the following count
+following_element = soup.find('li', class_='ProfileNav-item--following')
+following_count = following_element.find('span', class_='ProfileNav-value').get('data-count') if following_element else ""
+
+# Find the followers count
+followers_element = soup.find('li', class_='ProfileNav-item--followers')
+followers_count = followers_element.find('span', class_='ProfileNav-value').get('data-count') if followers_element else ""
+
+# Find the location
+location_element = soup.find('span', class_='ProfileHeaderCard-locationText')
+location = location_element.text.strip() if location_element else ""
+
+# Find the website
+website_element = soup.find('span', class_='ProfileHeaderCard-urlText')
+website = website_element.find('a')['title'] if website_element and website_element.find('a') else ""
+
+# Create a CSV file and write the scraped information
+output_path = 'twitter_profile.csv'
+
+with open(output_path, 'w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Bio', 'Following Count', 'Followers Count', 'Location', 'Website'])
+    writer.writerow([bio, following_count, followers_count, location, website])
+
+# Sleep for a few seconds to ensure the page source is retrieved
+time.sleep(10)
+
+# Quit the web driver
+driver.quit()
